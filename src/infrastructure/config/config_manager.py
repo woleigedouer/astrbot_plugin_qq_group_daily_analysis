@@ -295,6 +295,11 @@ class ConfigManager:
             ids = basic.get("bot_qq_ids", [])
         return ids
 
+    def get_spam_filter_keywords(self) -> list[str]:
+        """获取自定义垃圾消息过滤关键词列表"""
+        basic = self._get_group("basic")
+        return basic.get("spam_filter_keywords", [])
+
     def get_html_output_dir(self) -> str:
         """获取HTML输出目录"""
         from pathlib import Path
