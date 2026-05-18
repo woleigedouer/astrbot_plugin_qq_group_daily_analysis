@@ -189,10 +189,12 @@ class AnalysisApplicationService:
 
             cleaner = MessageCleanerService()
             bot_self_ids = self.config_manager.get_bot_self_ids()
+            spam_keywords = self.config_manager.get_spam_filter_keywords()
 
             # 对于自动任务，强制过滤指令；对于手动任务，也建议过滤以保持报告纯净
             unified_messages = cleaner.clean_messages(
-                raw_messages, bot_self_ids=bot_self_ids, filter_commands=True
+                raw_messages, bot_self_ids=bot_self_ids, filter_commands=True,
+                extra_spam_keywords=spam_keywords,
             )
             logger.info(
                 "消息清洗完成: group=%s, platform=%s, cleaned_count=%s, dropped=%s",
@@ -388,8 +390,10 @@ class AnalysisApplicationService:
 
             cleaner = MessageCleanerService()
             bot_self_ids = self.config_manager.get_bot_self_ids()
+            spam_keywords = self.config_manager.get_spam_filter_keywords()
             unified_messages = cleaner.clean_messages(
-                raw_messages, bot_self_ids=bot_self_ids, filter_commands=True
+                raw_messages, bot_self_ids=bot_self_ids, filter_commands=True,
+                extra_spam_keywords=spam_keywords,
             )
 
             # 5. 二次去重，确保只保留断点之后的真正新消息

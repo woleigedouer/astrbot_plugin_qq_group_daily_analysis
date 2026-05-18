@@ -28,6 +28,7 @@ class MessageCleanerService:
         messages: list[UnifiedMessage],
         bot_self_ids: list[str] = None,
         filter_commands: bool = True,
+        extra_spam_keywords: list[str] | None = None,
     ) -> list[UnifiedMessage]:
         """
         清理并过滤消息列表。
@@ -42,6 +43,13 @@ class MessageCleanerService:
         """
         bot_ids = set(bot_self_ids or [])
         cleaned_list = []
+
+        # 构建垃圾消息过滤正则（仅当有关键词时启用）
+        spam_pattern = None
+        if extra_spam_keywords:
+            valid_keywords = [re.escape(k) for k in extra_spam_keywords if k.strip()]
+            if valid_keywords:
+                spam_pattern = re.compile("|".join(valid_keywords), re.IGNORECASE)
 
         for msg in messages:
             # 1. 过滤机器人发送的消息
@@ -59,6 +67,10 @@ class MessageCleanerService:
                 is_command = True
 
             if is_command:
+                continue
+
+            # 3. 过滤广告/垃圾消息
+            if spam_pattern and first_text and spam_pattern.search(first_text):
                 continue
 
             # 3. 清理消息内容中的技术性噪音
