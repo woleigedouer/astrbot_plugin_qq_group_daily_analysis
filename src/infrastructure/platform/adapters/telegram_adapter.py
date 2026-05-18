@@ -442,7 +442,9 @@ class TelegramAdapter(PlatformAdapter):
                 group_id=group_id,
                 text_content=text_content,
                 contents=tuple(contents),
-                timestamp=int(record.created_at.timestamp()),
+                timestamp=int(record.created_at.replace(tzinfo=timezone.utc).timestamp())
+                if record.created_at.tzinfo is None
+                else int(record.created_at.timestamp()),
                 platform="telegram",
                 reply_to_id=None,
             )
