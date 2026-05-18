@@ -23,6 +23,11 @@ class MessageCleanerService:
     # 比如: "/group_analysis", "@bot /help", " /test"
     COMMAND_PATTERN = re.compile(r"^\s*(?:<@\d+>\s+)?/")
 
+    # 触发词匹配：@某人 + 插件指令关键词
+    TRIGGER_PATTERN = re.compile(
+        r"@\S+\s*(群分析|群总结|group_analysis)", re.IGNORECASE
+    )
+
     def clean_messages(
         self,
         messages: list[UnifiedMessage],
@@ -62,7 +67,7 @@ class MessageCleanerService:
             if (
                 filter_commands
                 and first_text
-                and self.COMMAND_PATTERN.match(first_text)
+                and (self.COMMAND_PATTERN.match(first_text) or self.TRIGGER_PATTERN.search(first_text))
             ):
                 is_command = True
 
