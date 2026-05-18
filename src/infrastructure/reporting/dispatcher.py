@@ -103,8 +103,15 @@ class ReportDispatcher:
         if image_url:
             caption = TraceContext.make_report_caption()
             if as_file:
+                from datetime import datetime
+                import os
+
+                date_str = datetime.now().strftime("%Y-%m-%d")
+                ext = os.path.splitext(image_url)[-1] or ".png"
+                filename = f"群聊日报_{date_str}{ext}"
                 sent = await self.message_sender.send_file(
-                    group_id, image_url, caption=caption, platform_id=platform_id
+                    group_id, image_url, caption=caption,
+                    platform_id=platform_id, filename=filename,
                 )
             else:
                 sent = await self.message_sender.send_image_smart(

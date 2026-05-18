@@ -616,6 +616,7 @@ class TelegramAdapter(PlatformAdapter):
         group_id: str,
         file_path: str,
         filename: str | None = None,
+        caption: str | None = None,
     ) -> bool:
         """发送文件消息"""
         client = self._telegram_client
@@ -660,6 +661,8 @@ class TelegramAdapter(PlatformAdapter):
 
             kwargs["document"] = file_obj
             kwargs["filename"] = filename
+            if caption:
+                kwargs["caption"] = caption
             kwargs["read_timeout"] = 300
             kwargs["write_timeout"] = 300
             kwargs["connect_timeout"] = 30

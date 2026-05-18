@@ -46,6 +46,7 @@ class MessageSender:
         file_path: str,
         caption: str = "",
         platform_id: str | None = None,
+        filename: str | None = None,
     ) -> bool:
         """发送文件（HTML/PDF/其它文件）。支持可选 caption。"""
         adapter = self.bot_manager.get_adapter(platform_id)
@@ -53,21 +54,24 @@ class MessageSender:
             logger.error(f"[MessageSender] 未找到平台 {platform_id} 的适配器")
             return False
 
-        # 首先发送文件，本方法的返回值只代表文件是否发送成功。
-        file_sent = await adapter.send_file(group_id, file_path)
+        # 尝试将 caption 合并到文件消息中（适配器支持时）
+        send_kwargs = {}
+        if filename:
+            send_kwargs["filename"] = filename
+        if caption and hasattr(adapter.send_file, "__code__") and "caption" in adapter.send_file.__code__.co_varnames:
+            send_kwargs["caption"] = caption
+            file_sent = await adapter.send_file(group_id, file_path, **send_kwargs)
+            return file_sent if file_sent else False
+
+        # 回退：分开发送文件和 caption
+        file_sent = await adapter.send_file(group_id, file_path, **send_kwargs)
 
         if not file_sent:
-            # 适配器返回 False，表示文件未成功发送
             return False
 
-        # 文件已成功发送，下面的 caption 发送为尽力而为，不影响整体成功与否。
         if caption:
             try:
-                caption_sent = await adapter.send_text(group_id, f"{caption}")
-                if not caption_sent:
-                    logger.warning(
-                        "[MessageSender] 文件已发送，但 caption 发送失败（适配器返回 False）"
-                    )
+                await adapter.send_text(group_id, f"{caption}")
             except Exception as e:
                 logger.warning(f"[MessageSender] 文件已发送，但 caption 发送异常: {e}")
 
