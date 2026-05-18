@@ -118,11 +118,11 @@ class ReportDispatcher:
         if sent:
             return True
 
-        # 6. 最终回退：如果图片发送失败（包括生成失败或发送接口报错），直接尝试发送文本报告
+        # 6. 图片发送失败，不回退文本
         logger.warning(
-            f"[{trace_id}] Image dispatch failed, falling back to text report."
+            f"[{trace_id}] Image dispatch failed, no text fallback."
         )
-        return await self._dispatch_text(group_id, analysis_result, platform_id)
+        return False
 
     async def _dispatch_html(
         self, group_id: str, analysis_result: dict[str, Any], platform_id: str | None
