@@ -62,11 +62,12 @@
                 "description": "输出格式",
                 "options": [
                     "image",
+                    "image_file",
                     "text",
                     "html"
                 ],
                 "default": "image",
-                "hint": "选择分析报告的输出方式：image(图片)、text(纯文本摘要)、html(可交互式网页文件)"
+                "hint": "选择分析报告的输出方式：image(图片)、image_file(文件)、text(纯文本摘要)、html(可交互式网页文件)"
             },
             "report_template": {
                 "type": "string",

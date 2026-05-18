@@ -49,6 +49,10 @@ class ReportDispatcher:
         success = False
         if output_format == "image":
             success = await self._dispatch_image(group_id, analysis_result, platform_id)
+        elif output_format == "image_file":
+            success = await self._dispatch_image(
+                group_id, analysis_result, platform_id, as_file=True
+            )
         elif output_format == "html":
             success = await self._dispatch_html(group_id, analysis_result, platform_id)
         else:
@@ -60,7 +64,8 @@ class ReportDispatcher:
             logger.warning(f"[{trace_id}] 群 {group_id} 的报告分发失败")
 
     async def _dispatch_image(
-        self, group_id: str, analysis_result: dict[str, Any], platform_id: str | None
+        self, group_id: str, analysis_result: dict[str, Any], platform_id: str | None,
+        as_file: bool = False,
     ) -> bool:
         trace_id = TraceContext.get()
         # 1. 检查渲染函数
@@ -96,9 +101,14 @@ class ReportDispatcher:
         sent = False
         if image_url:
             caption = TraceContext.make_report_caption()
-            sent = await self.message_sender.send_image_smart(
-                group_id, image_url, caption, platform_id
-            )
+            if as_file:
+                sent = await self.message_sender.send_file(
+                    group_id, image_url, caption=caption, platform_id=platform_id
+                )
+            else:
+                sent = await self.message_sender.send_image_smart(
+                    group_id, image_url, caption, platform_id
+                )
 
             # 5. 尝试上传到群文件/群相册（静默处理）
             # 无论消息发送是否成功（如超时回退），只要图片生成了，就尝试备份到群文件

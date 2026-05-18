@@ -598,7 +598,7 @@ class GroupDailyAnalysis(Star):
                 pass
             return None
 
-        if output_format == "image":
+        if output_format == "image" or output_format == "image_file":
             image_url, html_content = await self.report_generator.generate_image_report(
                 analysis_result,
                 group_id,
@@ -610,7 +610,12 @@ class GroupDailyAnalysis(Star):
 
             if image_url:
                 caption = TraceContext.make_report_caption()
-                sent = await adapter.send_image(group_id, image_url, caption=caption)
+                if output_format == "image_file":
+                    sent = await self.message_sender.send_file(
+                        group_id, image_url, caption=caption, platform_id=platform_id
+                    )
+                else:
+                    sent = await adapter.send_image(group_id, image_url, caption=caption)
                 if sent:
                     await self._try_upload_image(group_id, image_url, platform_id)
                     return  # 成功发送
