@@ -620,10 +620,8 @@ class GroupDailyAnalysis(Star):
                     await self._try_upload_image(group_id, image_url, platform_id)
                     return  # 成功发送
 
-            # 如果图片生成或发送失败，直接回退到文本
-            logger.warning(f"图片报告发送失败，正在发送文本回退报告。群: {group_id}")
-            text_report = self.report_generator.generate_text_report(analysis_result)
-            await adapter.send_text_report(group_id, text_report)
+            # 图片生成或发送失败，不回退文本
+            logger.warning(f"图片报告生成或发送失败，不回退文本。群: {group_id}")
             return
 
         elif output_format == "html":
