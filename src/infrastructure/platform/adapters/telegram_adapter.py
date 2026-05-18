@@ -584,6 +584,9 @@ class TelegramAdapter(PlatformAdapter):
 
             # 2. 发送图片
             kwargs["photo"] = file_obj
+            kwargs["read_timeout"] = 300
+            kwargs["write_timeout"] = 300
+            kwargs["connect_timeout"] = 30
             try:
                 await client.send_photo(**kwargs)
             finally:
@@ -657,6 +660,9 @@ class TelegramAdapter(PlatformAdapter):
 
             kwargs["document"] = file_obj
             kwargs["filename"] = filename
+            kwargs["read_timeout"] = 300
+            kwargs["write_timeout"] = 300
+            kwargs["connect_timeout"] = 30
 
             try:
                 await client.send_document(**kwargs)
