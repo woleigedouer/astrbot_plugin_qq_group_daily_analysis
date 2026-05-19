@@ -28,6 +28,14 @@ class MessageCleanerService:
         r"@\S+\s*(群分析|群总结|group_analysis)", re.IGNORECASE
     )
 
+    # 垃圾消息混淆字符：广告常在关键词间插入这些字符来绕过过滤
+    SPAM_OBFUSCATION_CHARS = re.compile(
+        r"[\s\-·~～•‧∙⋅★☆❤♥♡✦✧●○◆◇■□▪▫※×†‡"
+        r"​‌‍﻿"  # 零宽字符
+        r"()（）\[\]【】{}｛｝<>《》〈〉「」『』"
+        r".,，。、;；:：!！?？/\\|｜#＃@＠$＄%％^＾&＆*＊+＋=＝`''\"\"\"_＿]"
+    )
+
     def clean_messages(
         self,
         messages: list[UnifiedMessage],
@@ -51,10 +59,29 @@ class MessageCleanerService:
 
         # 构建垃圾消息过滤正则（仅当有关键词时启用）
         spam_pattern = None
+        spam_pattern_normalized = None
         if extra_spam_keywords:
             valid_keywords = [re.escape(k) for k in extra_spam_keywords if k.strip()]
             if valid_keywords:
                 spam_pattern = re.compile("|".join(valid_keywords), re.IGNORECASE)
+                # 归一化版本：关键词去除混淆字符后匹配，带最小长度保护
+                normalized_keywords = []
+                for k in extra_spam_keywords:
+                    if not k.strip():
+                        continue
+                    nk = self.SPAM_OBFUSCATION_CHARS.sub("", k)
+                    if not nk:
+                        continue
+                    # 防止短关键词归一化后误杀：中文至少2字符，纯ASCII至少3字符
+                    if nk.isascii() and len(nk) < 3:
+                        continue
+                    if not nk.isascii() and len(nk) < 2:
+                        continue
+                    normalized_keywords.append(re.escape(nk))
+                if normalized_keywords:
+                    spam_pattern_normalized = re.compile(
+                        "|".join(normalized_keywords), re.IGNORECASE
+                    )
 
         for msg in messages:
             # 1. 过滤机器人发送的消息
@@ -74,9 +101,21 @@ class MessageCleanerService:
             if is_command:
                 continue
 
-            # 3. 过滤广告/垃圾消息
-            if spam_pattern and first_text and spam_pattern.search(first_text):
-                continue
+            # 3. 过滤广告/垃圾消息（检测正文 + 发送者名称）
+            if spam_pattern:
+                spam_targets = [t for t in (first_text, msg.sender_name, msg.sender_card) if t]
+                is_spam = False
+                for target in spam_targets:
+                    if spam_pattern.search(target):
+                        is_spam = True
+                        break
+                    if spam_pattern_normalized:
+                        normalized = self.SPAM_OBFUSCATION_CHARS.sub("", target)
+                        if spam_pattern_normalized.search(normalized):
+                            is_spam = True
+                            break
+                if is_spam:
+                    continue
 
             # 3. 清理消息内容中的技术性噪音
             cleaned_contents = []
